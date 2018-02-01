@@ -3,17 +3,22 @@
 
 #include <QTcpSocket>
 #include <QVector>
+#include <QThread>
+#include <QWaitCondition>
+#include <QMutex>
 #include "fileinfo.h"
 
-class Ftp : public QObject
+class Ftp : public QThread
 {
     Q_OBJECT
 public:
-    Ftp(QObject *parent = nullptr);
+    Ftp(QObject *parent = 0);
     ~Ftp();
 
     //FTP Commands
-    bool connectToHost(QString host, quint16 port); // Done
+
+    bool connectToHost(QString host, quint16 port, QString username, QString password); // Done
+    void run() override;
     void disconnectFromHost(); // Done
     void login(QString &username, QString &password);
     QVector<FileInfo> list(QString path = ""); // Done
@@ -26,7 +31,7 @@ public:
 signals:
     void connectedToServer();
     void disconnectedFromServer();
-    void ready();
+    void response(QByteArray);
 
 private slots:
     void socketConnected();
@@ -38,6 +43,16 @@ private:
     QTcpSocket *socket;
     QByteArray bytesFromSocket;
     void parseDir(const QByteArray &buffer, FileInfo *info);
+    void sendCommand(QByteArray command);
+    QString receiveResponse();
+
+    QString username;
+    QString password;
+
+    QString hostName;
+    quint16 port;
+    QMutex mutex;
+    QWaitCondition cond;
 };
 
 #endif // FTP_H

@@ -27,12 +27,15 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     fileinfo.cpp \
-    ftp.cpp
+    ftp.cpp \
+    filesocket.cpp
 
 HEADERS += \
         mainwindow.h \
     fileinfo.h \
-    ftp.h
+    ftp.h \
+    filesocket.h \
+    filesocket.h
 
 FORMS += \
         mainwindow.ui

@@ -39,6 +39,7 @@ void MainWindow::on_connectButton_clicked()
         connect(&ftp, SIGNAL(connectedToServer()), this, SLOT(connected()));
         connect(&ftp, SIGNAL(disconnectedFromServer()), this, SLOT(disconnected()));
         connect(&ftp, SIGNAL(response(QByteArray)), this, SLOT(response(QByteArray)));
+        connect(&ftp, SIGNAL(message(QString)), this, SLOT(message(Qstri)))
 
         QString address = ui->address->text();
         quint16 port = ui->port->text().toInt();

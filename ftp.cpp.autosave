@@ -44,6 +44,7 @@ void Ftp::run(){
     socket.connectToHost(hostName, port);
     qDebug() << "Connecting";
     if(!socket.waitForConnected()){
+        emit 
         return;
     }
     qDebug() << "Connected";
