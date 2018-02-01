@@ -1,6 +1,6 @@
 #include "ftp.h"
 
-Ftp::Ftp(QObject *parent) : QThread(parent){
+Ftp::Ftp(QObject *parent) : QObject(parent){
 
 }
 
@@ -9,44 +9,28 @@ Ftp::~Ftp(){
 }
 
 
-bool Ftp::connectToHost(QString host, quint16 port, QString username, QString password){
+void Ftp::connectToHost(QString host, quint16 port, QString username, QString password){
 
-
-    QMutexLocker locker(&mutex);
-    this->hostName = host;
-    this->port = port;
     this->username = username;
     this->password = password;
 
-    if(!isRunning()){
-        start();
-    } else {
-        cond.wakeOne();
-    }
+    socket = new QTcpSocket(this);
 
     bytesFromSocket.clear();
 
 
-//    connect(socket, SIGNAL(connected()), this, SLOT(socketConnected()));
-//    connect(socket, SIGNAL(readyRead()), this, SLOT(socketReadyRead()));
-//    connect(socket, SIGNAL(disconnected()), this, SLOT(socketConnectionClosed()));
-//    connect(socket, SIGNAL(bytesWritten(qint64)), this, SLOT(socketBytesWritten(qint64)));
+    connect(socket, SIGNAL(connected()), this, SLOT(socketConnected()));
+    connect(socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(error()));
+    connect(socket, SIGNAL(readyRead()), this, SLOT(socketReadyRead()));
+    connect(socket, SIGNAL(disconnected()), this, SLOT(socketConnectionClosed()));
+    connect(socket, SIGNAL(bytesWritten(qint64)), this, SLOT(socketBytesWritten(qint64)));
+    connect(socket,SIGNAL(disconnected()),socket,SLOT( deleteLater()));
 
-  //  connect(socket,SIGNAL(disconnected()),socket,SLOT( deleteLater()));
-
-
+    socket->connectToHost(host, port);
 }
 
-void Ftp::run(){
-    QTcpSocket socket;
-
-    qDebug() << "Connect";
-    socket.connectToHost(hostName, port);
-    qDebug() << "Connecting";
-    if(!socket.waitForConnected()){
-        return;
-    }
-    qDebug() << "Connected";
+void Ftp::error(){
+    emit message("Can't connect to host!");
 }
 
 void Ftp::socketBytesWritten(qint64 bytes){
@@ -114,9 +98,7 @@ void Ftp::parseDir(const QByteArray &buffer, FileInfo *info){
 
 QVector<FileInfo> Ftp::list(QString path){
     QVector<FileInfo> files;
-
     sendCommand("LIST");
-
     socket->waitForReadyRead();
 
     while(socket->canReadLine()){

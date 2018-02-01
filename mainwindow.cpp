@@ -26,7 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
- //   delete ftp;
+    delete ftp;
     delete fileModel;
 }
 
@@ -34,11 +34,12 @@ void MainWindow::on_connectButton_clicked()
 {
     if(!disconnect){
 
-     //   ftp = new Ftp(this);
+        ftp = new Ftp();
 
-        connect(&ftp, SIGNAL(connectedToServer()), this, SLOT(connected()));
-        connect(&ftp, SIGNAL(disconnectedFromServer()), this, SLOT(disconnected()));
-        connect(&ftp, SIGNAL(response(QByteArray)), this, SLOT(response(QByteArray)));
+        connect(ftp, SIGNAL(connectedToServer()), this, SLOT(connected()));
+        connect(ftp, SIGNAL(disconnectedFromServer()), this, SLOT(disconnected()));
+        connect(ftp, SIGNAL(response(QByteArray)), this, SLOT(response(QByteArray)));
+        connect(ftp, SIGNAL(message(QString)), this, SLOT(message(QString)));
 
         QString address = ui->address->text();
         quint16 port = ui->port->text().toInt();
@@ -46,16 +47,9 @@ void MainWindow::on_connectButton_clicked()
         QString username = ui->username->text();
         QString password = ui->password->text();
 
-        if(!ftp.connectToHost(address, port, username, password)){
-            ui->logTextEdit->appendPlainText("Can't connect to host!");
-        } else {
-            ui->logTextEdit->appendPlainText("Connected to " + address +"!");
-            ui->connectButton->setText("Disconnect!");
-
-            disconnect = true;
-        }
+        ftp->connectToHost(address, port, username, password);
     } else {
-        ftp.disconnectFromHost();
+        ftp->disconnectFromHost();
         ui->connectButton->setText("Connect!");
         disconnect = false;
     }
@@ -67,7 +61,7 @@ void MainWindow::on_downloadButton_clicked(){
 }
 
 void MainWindow::getRemoteFiles(QString path){
-    QVector<FileInfo> files = ftp.list();
+    QVector<FileInfo> files = ftp->list();
     qDebug() << files.size();
     foreach(FileInfo file, files){
 
@@ -84,6 +78,8 @@ void MainWindow::getRemoteFiles(QString path){
 }
 
 void MainWindow::connected(){
+    ui->connectButton->setText("Disconnect!");
+    disconnect = true;
   //  getRemoteFiles();
     ui->remoteFiles->setEnabled(true);
 }
@@ -99,6 +95,10 @@ void MainWindow::disconnected(){
 
 void MainWindow::response(QByteArray response){
     ui->logTextEdit->appendPlainText(response);
+}
+
+void MainWindow::message(QString message){
+    ui->logTextEdit->appendPlainText(message);
 }
 
 

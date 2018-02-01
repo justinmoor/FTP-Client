@@ -26,10 +26,11 @@ private slots:
     void on_connectButton_clicked();
     void on_downloadButton_clicked();
     void response(QByteArray);
+    void message(QString);
 
 private:
     Ui::MainWindow *ui;
-    Ftp ftp;
+    Ftp *ftp;
     bool disconnect;
     QFileSystemModel *fileModel;
     void getRemoteFiles(QString path = "");
