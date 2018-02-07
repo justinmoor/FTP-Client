@@ -7,6 +7,7 @@
 #include <QMutex>
 #include <QDataStream>
 #include "fileinfo.h"
+#include "filesocket.h"
 
 class Ftp : public QObject
 {
@@ -20,17 +21,17 @@ public:
     void connectToHost(QString host, quint16 port, QString username, QString password); // Done
     void disconnectFromHost(); // Done
     void login(QString &username, QString &password); // Done
-    QVector<FileInfo> list(QString path = ""); // Done
+    QVector<FileInfo> list(QString path = "/"); // Done
     void cd(QString &path);
     void get(QString &filename);
-    void put(QString &filename);
+    void put(QString &filename); // Upload;
     void mkdir(QString &dirname);
     void rmdir(QString &dirname);
 
 signals:
     void connectedToServer();
     void disconnectedFromServer();
-    void response(QByteArray);
+    void response(QString);
     void message(QString);
 
 private slots:
@@ -42,13 +43,15 @@ private slots:
 
 private:
     QTcpSocket *socket;
+    FileSocket *fileSocket;
     QByteArray bytesFromSocket;
     void parseDir(const QByteArray &buffer, FileInfo *info);
     void sendCommand(QByteArray command);
     QString receiveResponse();
-
+    void connectFileSocket(QString address, quint16 port);
     QString username;
     QString password;
+
 
 
 };

@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QtNetwork>
 #include <QDebug>
+#include <QDirModel>
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -14,12 +15,15 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->remoteTab->removeTab(1);
     ui->logTab->removeTab(1);
     ui->downloadProgress->setValue(0);
+    ui->uploadProgress->setValue(0);
     ui->remoteFiles->setEnabled(false);
  //   ui->downloadButton->setEnabled(false);
 
     fileModel = new QFileSystemModel;
     fileModel->setRootPath(QDir::currentPath());
     ui->localFiles->setModel(fileModel);
+    ui->uploadButton->setEnabled(false);
+
 
 }
 
@@ -33,13 +37,14 @@ MainWindow::~MainWindow()
 void MainWindow::on_connectButton_clicked()
 {
     if(!disconnect){
-
-        ftp = new Ftp();
+        ftp = new Ftp(); // Delete this
 
         connect(ftp, SIGNAL(connectedToServer()), this, SLOT(connected()));
         connect(ftp, SIGNAL(disconnectedFromServer()), this, SLOT(disconnected()));
-        connect(ftp, SIGNAL(response(QByteArray)), this, SLOT(response(QByteArray)));
+        connect(ftp, SIGNAL(response(QString)), this, SLOT(response(QString)));
         connect(ftp, SIGNAL(message(QString)), this, SLOT(message(QString)));
+
+
 
         QString address = ui->address->text();
         quint16 port = ui->port->text().toInt();
@@ -52,6 +57,7 @@ void MainWindow::on_connectButton_clicked()
         ftp->disconnectFromHost();
         ui->connectButton->setText("Connect!");
         disconnect = false;
+
     }
 }
 
@@ -61,8 +67,7 @@ void MainWindow::on_downloadButton_clicked(){
 }
 
 void MainWindow::getRemoteFiles(QString path){
-    QVector<FileInfo> files = ftp->list();
-    qDebug() << files.size();
+    QVector<FileInfo> files = ftp->list(path);
     foreach(FileInfo file, files){
 
         QTreeWidgetItem *item = new QTreeWidgetItem;
@@ -80,7 +85,7 @@ void MainWindow::getRemoteFiles(QString path){
 void MainWindow::connected(){
     ui->connectButton->setText("Disconnect!");
     disconnect = true;
-  //  getRemoteFiles();
+    getRemoteFiles();
     ui->remoteFiles->setEnabled(true);
 }
 
@@ -91,9 +96,10 @@ void MainWindow::disconnected(){
     ui->logTextEdit->appendPlainText("You have been disconnected!");
     ui->connectButton->setText("Connect!");
     disconnect = false;
+
 }
 
-void MainWindow::response(QByteArray response){
+void MainWindow::response(QString response){
     ui->logTextEdit->appendPlainText(response);
 }
 
@@ -101,4 +107,24 @@ void MainWindow::message(QString message){
     ui->logTextEdit->appendPlainText(message);
 }
 
+void MainWindow::on_remoteFiles_itemDoubleClicked(QTreeWidgetItem *item, int column)
+{
+    QString path = item->text(column);
+    getRemoteFiles(path);
+}
 
+void MainWindow::on_uploadButton_clicked()
+{
+
+
+    QModelIndex index = ui->localFiles->currentIndex();
+    QString filePath = fileModel->filePath(index);
+
+    qDebug() << filePath;
+
+}
+
+void MainWindow::on_localFiles_clicked(const QModelIndex &index)
+{
+    ui->uploadButton->setEnabled((fileModel->fileInfo(index).isFile()) ? true : false);
+}

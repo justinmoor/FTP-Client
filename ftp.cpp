@@ -18,13 +18,12 @@ void Ftp::connectToHost(QString host, quint16 port, QString username, QString pa
 
     bytesFromSocket.clear();
 
-
     connect(socket, SIGNAL(connected()), this, SLOT(socketConnected()));
-    connect(socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(error()));
+    connect(socket, SIGNAL(disconnected()),socket,SLOT( deleteLater()));
     connect(socket, SIGNAL(readyRead()), this, SLOT(socketReadyRead()));
     connect(socket, SIGNAL(disconnected()), this, SLOT(socketConnectionClosed()));
     connect(socket, SIGNAL(bytesWritten(qint64)), this, SLOT(socketBytesWritten(qint64)));
-    connect(socket,SIGNAL(disconnected()),socket,SLOT( deleteLater()));
+    connect(socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(error()));
 
     socket->connectToHost(host, port);
 }
@@ -34,12 +33,18 @@ void Ftp::error(){
 }
 
 void Ftp::socketBytesWritten(qint64 bytes){
-
+    qDebug() << "written";
 }
 
 void Ftp::socketReadyRead(){
     qDebug() << "Ready read";
-    if(receiveResponse().startsWith("430")) socket->disconnectFromHost();
+    QString response = receiveResponse();
+    if(response.startsWith("230")){
+        connectFileSocket(response.split(" ").at(1), response.split(" ").at(2).toInt());
+        emit connectedToServer();
+    } else if(response.startsWith("250")){
+
+    }
 }
 
 void Ftp::socketConnectionClosed(){
@@ -49,7 +54,6 @@ void Ftp::socketConnectionClosed(){
 // Authenicate
 void Ftp::socketConnected(){
     sendCommand(("LOGIN " + username + " " + password).toLocal8Bit());
-    emit connectedToServer();
 }
 
 void Ftp::disconnectFromHost(){
@@ -96,9 +100,22 @@ void Ftp::parseDir(const QByteArray &buffer, FileInfo *info){
        }
 }
 
+//void Ftp::parseList(QString list){
+//    QStringList lines = list.split("\n");
+//    QVector<FileInfo> files;
+//    foreach(QString line, lines){
+//        FileInfo file;
+//        parseDir(line, &file);
+//        files.push_back(file);
+
+//    }
+
+//    emit listDone(lines);
+//}
+
 QVector<FileInfo> Ftp::list(QString path){
     QVector<FileInfo> files;
-    sendCommand("LIST");
+    sendCommand("LIST " + path.toLocal8Bit());
     socket->waitForReadyRead();
 
     while(socket->canReadLine()){
@@ -114,12 +131,22 @@ QVector<FileInfo> Ftp::list(QString path){
 }
 
 void Ftp::sendCommand(QByteArray command){
-    socket->write(command);
+    socket->flush();
+    socket->write(command+"\r\n");
 }
 
 QString Ftp::receiveResponse(){
     QString res = socket->readAll();
-    emit response(res.toLocal8Bit());
-    socket->flush();
-    return res;
+    emit response(res.trimmed());
+    return res.trimmed();
+}
+
+void Ftp::put(QString &filename){
+
+}
+
+void Ftp::connectFileSocket(QString address, quint16 port){
+    fileSocket = new FileSocket();
+
+    fileSocket->connectFileSocket(address, port);
 }
