@@ -18,6 +18,7 @@ private:
 
 public slots:
     void readyRead();
+    void fileSocketConnected();
 };
 
 #endif // FILESOCKET_H

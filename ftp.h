@@ -24,7 +24,7 @@ public:
     QVector<FileInfo> list(QString path = "/"); // Done
     void cd(QString &path);
     void get(QString &filename);
-    void put(QString &filename); // Upload;
+    void put(QString &filePath, QString &fileName); // Upload;
     void mkdir(QString &dirname);
     void rmdir(QString &dirname);
 
@@ -51,6 +51,7 @@ private:
     void connectFileSocket(QString address, quint16 port);
     QString username;
     QString password;
+    QString host;
 
 
 

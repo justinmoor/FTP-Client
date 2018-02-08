@@ -13,6 +13,7 @@ void Ftp::connectToHost(QString host, quint16 port, QString username, QString pa
 
     this->username = username;
     this->password = password;
+    this->host = host;
 
     socket = new QTcpSocket(this);
 
@@ -40,7 +41,7 @@ void Ftp::socketReadyRead(){
     qDebug() << "Ready read";
     QString response = receiveResponse();
     if(response.startsWith("230")){
-        connectFileSocket(response.split(" ").at(1), response.split(" ").at(2).toInt());
+        connectFileSocket(host, response.split(" ").at(3).toInt());
         emit connectedToServer();
     } else if(response.startsWith("250")){
 
@@ -141,8 +142,9 @@ QString Ftp::receiveResponse(){
     return res.trimmed();
 }
 
-void Ftp::put(QString &filename){
-
+void Ftp::put(QString &filePath, QString &fileName){
+    socket->write("STOR " + fileName.toLocal8Bit());
+    fileSocket->sendFile(filePath);
 }
 
 void Ftp::connectFileSocket(QString address, quint16 port){

@@ -115,13 +115,11 @@ void MainWindow::on_remoteFiles_itemDoubleClicked(QTreeWidgetItem *item, int col
 
 void MainWindow::on_uploadButton_clicked()
 {
-
-
     QModelIndex index = ui->localFiles->currentIndex();
     QString filePath = fileModel->filePath(index);
-
-    qDebug() << filePath;
-
+    QString fileName = fileModel->fileName(index);
+    qDebug() << fileName;
+    ftp->put(filePath, fileName);
 }
 
 void MainWindow::on_localFiles_clicked(const QModelIndex &index)
