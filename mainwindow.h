@@ -6,6 +6,7 @@
 #include <QTcpSocket>
 #include <QVector>
 #include <QTreeWidget>
+#include <QInputDialog>
 
 #include "ftp.h"
 #include "fileinfo.h"
@@ -35,6 +36,8 @@ private slots:
     void on_uploadButton_clicked();
 
     void on_localFiles_clicked(const QModelIndex &index);
+    void populateList(QVector<FileInfo>);
+    void menu(const QPoint &click);
 
 private:
     Ui::MainWindow *ui;

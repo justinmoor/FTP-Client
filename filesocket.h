@@ -12,13 +12,20 @@ public:
     void connectFileSocket(QString address, quint16 port);
     void sendFile(QString fileName);
     void receiveFile(QString fileName);
+    void setReceivingList(bool recList);
 private:
     bool uploading = false;
+    bool receivingList = false;
     QString fileName;
+    QString command;
 
 public slots:
     void readyRead();
     void fileSocketConnected();
+    void currentCommand(QString command);
+
+signals:
+    void listReceived(QString list);
 };
 
 #endif // FILESOCKET_H

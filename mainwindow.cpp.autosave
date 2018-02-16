@@ -119,7 +119,6 @@ void MainWindow::populateList(QVector<FileInfo> fileInfo){
     ui->remoteFiles->clear();
     QVector<FileInfo> files = fileInfo;
     foreach(FileInfo file, files){
-
         QTreeWidgetItem *item = new QTreeWidgetItem;
         item->setText(0, file.getName());
         item->setText(1, (file.isDir()) ? "" : QString::number(file.getSize()));

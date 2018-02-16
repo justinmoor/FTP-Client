@@ -2,5 +2,7 @@
     <qresource prefix="/icons">
         <file>icons/folder.png</file>
         <file>icons/file.png</file>
+        <file>icons/ftp-upload.png</file>
+        <file>icons/reconnect.png</file>
     </qresource>
 </RCC>

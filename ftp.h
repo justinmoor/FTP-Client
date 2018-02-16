@@ -21,7 +21,7 @@ public:
     void connectToHost(QString host, quint16 port, QString username, QString password); // Done
     void disconnectFromHost(); // Done
     void login(QString &username, QString &password); // Done
-    QVector<FileInfo> list(QString path = "/"); // Done
+    void list(QString path = "/"); // Done
     void cd(QString &path);
     void get(QString &filename);
     void put(QString &filePath, QString &fileName); // Upload;
@@ -33,6 +33,8 @@ signals:
     void disconnectedFromServer();
     void response(QString);
     void message(QString);
+    void listDone(QVector<FileInfo>);
+    void currentCommand(QString command);
 
 private slots:
     void socketConnected();
@@ -40,6 +42,7 @@ private slots:
     void socketConnectionClosed();
     void socketBytesWritten(qint64);
     void error();
+    void parseList(QString list);
 
 private:
     QTcpSocket *socket;
@@ -52,6 +55,7 @@ private:
     QString username;
     QString password;
     QString host;
+
 
 
 

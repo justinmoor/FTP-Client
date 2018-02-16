@@ -31,19 +31,32 @@ void FileSocket::receiveFile(QString fileName){
 }
 
 void FileSocket::readyRead(){
-    QFile file(fileName);
-    QByteArray buffer = readAll();
+    if(!command.startsWith("LIST")){
+        QFile file(fileName);
+        QByteArray buffer = readAll();
 
-    if(!file.open(QFile::Append))
-    {
-        qDebug() << "Could not open file!";
-        return;
+        if(!file.open(QFile::Append))
+        {
+            qDebug() << "Could not open file!";
+            return;
+        }
+
+        file.write(buffer);
+        file.close();
+    } else {
+        QString fileList = readAll();
+        emit listReceived(fileList);
     }
-
-    file.write(buffer);
-    file.close();
 }
 
 void FileSocket::fileSocketConnected(){
     qDebug () << "File socket connected";
+}
+
+void FileSocket::setReceivingList(bool recList){
+    this->receivingList = recList;
+}
+
+void FileSocket::currentCommand(QString command){
+   this->command = command;
 }

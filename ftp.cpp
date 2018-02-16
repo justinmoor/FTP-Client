@@ -34,7 +34,7 @@ void Ftp::error(){
 }
 
 void Ftp::socketBytesWritten(qint64 bytes){
-    qDebug() << "written";
+
 }
 
 void Ftp::socketReadyRead(){
@@ -43,8 +43,6 @@ void Ftp::socketReadyRead(){
     if(response.startsWith("230")){
         connectFileSocket(host, response.split(" ").at(3).toInt());
         emit connectedToServer();
-    } else if(response.startsWith("250")){
-
     }
 }
 
@@ -101,54 +99,47 @@ void Ftp::parseDir(const QByteArray &buffer, FileInfo *info){
        }
 }
 
-//void Ftp::parseList(QString list){
-//    QStringList lines = list.split("\n");
-//    QVector<FileInfo> files;
-//    foreach(QString line, lines){
-//        FileInfo file;
-//        parseDir(line, &file);
-//        files.push_back(file);
-
-//    }
-
-//    emit listDone(lines);
-//}
-
-QVector<FileInfo> Ftp::list(QString path){
+void Ftp::parseList(QString list){
+    QStringList lines = list.split("\n");
     QVector<FileInfo> files;
-    sendCommand("LIST " + path.toLocal8Bit());
-    socket->waitForReadyRead();
-
-    while(socket->canReadLine()){
+    foreach(QString line, lines){
         FileInfo file;
-        bytesFromSocket = socket->readLine();
-        parseDir(bytesFromSocket, &file);
-
+        parseDir(line.toLocal8Bit(), &file);
         files.push_back(file);
 
-        bytesFromSocket.clear();
     }
-    return files;
+    emit listDone(files);
+}
+
+void Ftp::list(QString path){
+    path = '"' + path + '"';
+    sendCommand("LIST " + path.toLocal8Bit());
+}
+
+void Ftp::mkdir(QString &dirname){
+    sendCommand("MKD " + dirname.toLocal8Bit());
 }
 
 void Ftp::sendCommand(QByteArray command){
+    emit currentCommand(command);
     socket->flush();
     socket->write(command+"\r\n");
 }
 
 QString Ftp::receiveResponse(){
-    QString res = socket->readAll();
+    QString res = socket->readLine();
     emit response(res.trimmed());
     return res.trimmed();
 }
 
 void Ftp::put(QString &filePath, QString &fileName){
-    socket->write("STOR " + fileName.toLocal8Bit());
+    sendCommand("PUT " + fileName.toLocal8Bit());
     fileSocket->sendFile(filePath);
 }
 
 void Ftp::connectFileSocket(QString address, quint16 port){
     fileSocket = new FileSocket();
-
     fileSocket->connectFileSocket(address, port);
+    connect(fileSocket, SIGNAL(listReceived(QString)), this, SLOT(parseList(QString)));
+    connect(this, SIGNAL(currentCommand(QString)), fileSocket, SLOT(currentCommand(QString)));
 }

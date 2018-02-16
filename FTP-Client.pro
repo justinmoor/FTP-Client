@@ -38,7 +38,8 @@ HEADERS += \
     filesocket.h
 
 FORMS += \
-        mainwindow.ui
+        mainwindow.ui \
+    createdirectory.ui
 
 RESOURCES += \
     icons.qrc \
