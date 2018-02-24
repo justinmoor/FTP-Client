@@ -11,6 +11,7 @@ void FileSocket::connectFileSocket(QString address, quint16 port){
     connect(this, SIGNAL(connected()), this, SLOT(fileSocketConnected()));
 }
 
+
 void FileSocket::sendFile(QString fileName){
     QFile file(fileName);
     QByteArray buffer;
@@ -19,30 +20,43 @@ void FileSocket::sendFile(QString fileName){
         qDebug() << "Something went wrong";
     }
 
+
+
     buffer = file.readAll();
 
     write(buffer);
+    qDebug() << bytesToWrite();
 
     file.close();
 }
 
 void FileSocket::receiveFile(QString fileName){
     this->fileName = fileName;
+    fileNameSet = true;
 }
 
 void FileSocket::readyRead(){
     if(!command.startsWith("LIST")){
-        QFile file(fileName);
-        QByteArray buffer = readAll();
+        if(fileNameSet){
+            QFile file(fileName);
 
-        if(!file.open(QFile::Append))
-        {
-            qDebug() << "Could not open file!";
-            return;
+            if(!file.open(QIODevice::WriteOnly | QIODevice::Append)){
+                qDebug() << file.errorString();
+                return;
+            }
+
+            emit bytesReceived(bytesAvailable());
+
+            QByteArray buffer = readAll();
+
+            file.write(buffer);
+            file.close();
+
+            if(!isReadable()){
+                fileNameSet = false;
+            }
+
         }
-
-        file.write(buffer);
-        file.close();
     } else {
         QString fileList = readAll();
         emit listReceived(fileList);

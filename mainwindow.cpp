@@ -17,15 +17,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->downloadProgress->setValue(0);
     ui->uploadProgress->setValue(0);
     ui->remoteFiles->setEnabled(false);
- //   ui->downloadButton->setEnabled(false);
+    ui->downloadButton->setEnabled(false);
 
     fileModel = new QFileSystemModel;
     fileModel->setRootPath(QDir::currentPath());
     ui->localFiles->setModel(fileModel);
     ui->uploadButton->setEnabled(false);
     ui->remoteFiles->setContextMenuPolicy(Qt::CustomContextMenu);
-
-
 }
 
 MainWindow::~MainWindow()
@@ -45,6 +43,8 @@ void MainWindow::on_connectButton_clicked()
         connect(ftp, SIGNAL(response(QString)), this, SLOT(response(QString)));
         connect(ftp, SIGNAL(message(QString)), this, SLOT(message(QString)));
         connect(ftp, SIGNAL(listDone(QVector<FileInfo>)), this, SLOT(populateList(QVector<FileInfo>)));
+        connect(ftp, SIGNAL(toDownloadBar(qint64)), this, SLOT(populateDownloadBar(qint64)));
+        connect(ftp, SIGNAL(toUploadBar(qint64)), this, SLOT(populateUploadBar(qint64)));
 
         QString address = ui->address->text();
         quint16 port = ui->port->text().toInt();
@@ -61,10 +61,6 @@ void MainWindow::on_connectButton_clicked()
     }
 }
 
-void MainWindow::on_downloadButton_clicked(){
-
-   // socket->write("C:");
-}
 
 void MainWindow::getRemoteFiles(QString path){
     ftp->list(path);
@@ -82,6 +78,9 @@ void MainWindow::connected(){
 void MainWindow::disconnected(){
     ui->remoteFiles->clear();
     ui->remoteFiles->setEnabled(false);
+    ui->downloadButton->setEnabled(false);
+    ui->downloadProgress->setValue(0);
+    ui->uploadProgress->setValue(0);
     ui->logTextEdit->appendPlainText("You have been disconnected!");
     ui->connectButton->setText("Connect!");
     disconnect = false;
@@ -96,30 +95,43 @@ void MainWindow::message(QString message){
     ui->logTextEdit->appendPlainText(message);
 }
 
-void MainWindow::on_remoteFiles_itemDoubleClicked(QTreeWidgetItem *item, int column)
-{
+void MainWindow::on_remoteFiles_itemDoubleClicked(QTreeWidgetItem *item, int column){
     QString path = item->text(0);
     getRemoteFiles(path);
 }
 
-void MainWindow::on_uploadButton_clicked()
-{
+void MainWindow::on_uploadButton_clicked(){
+    bytesUploaded = 0;
     QModelIndex index = ui->localFiles->currentIndex();
+    ui->uploadProgress->setMaximum(fileModel->size(index));
     QString filePath = fileModel->filePath(index);
     QString fileName = '"' + fileModel->fileName(index) + '"';
     ftp->put(filePath, fileName);
 }
 
-void MainWindow::on_localFiles_clicked(const QModelIndex &index)
-{
+// TODO FIXEN!!!!!!!!
+void MainWindow::on_downloadButton_clicked(){
+    bytesDownloaded = 0;
+    ui->downloadProgress->setMaximum(ui->remoteFiles->currentItem()->text(1).toInt());
+    QString fileName = ui->remoteFiles->currentItem()->text(0);
+    QModelIndex index = ui->localFiles->currentIndex();
+    QString savePath = fileModel->filePath(index) + "/" + fileName;
+
+    ftp->get(fileName, savePath);
+}
+
+void MainWindow::on_localFiles_clicked(const QModelIndex &index){
     ui->uploadButton->setEnabled((fileModel->fileInfo(index).isFile()) ? true : false);
+}
+
+void MainWindow::on_remoteFiles_itemClicked(QTreeWidgetItem *item, int column){
+    ui->downloadButton->setEnabled((item->text(2) == "File") ? true : false);
 }
 
 void MainWindow::populateList(QVector<FileInfo> fileInfo){
     ui->remoteFiles->clear();
     QVector<FileInfo> files = fileInfo;
     foreach(FileInfo file, files){
-
         QTreeWidgetItem *item = new QTreeWidgetItem;
         item->setText(0, file.getName());
         item->setText(1, (file.isDir()) ? "" : QString::number(file.getSize()));
@@ -144,4 +156,15 @@ void MainWindow::menu(const QPoint &click){
            ftp->mkdir(dirname);
         }
     }
+}
+
+void MainWindow::populateDownloadBar(qint64 bytes){
+    bytesDownloaded += bytes;
+    ui->downloadProgress->setValue(bytesDownloaded);
+}
+
+void MainWindow::populateUploadBar(qint64 bytes){
+    bytesUploaded += bytes;
+
+    ui->uploadProgress->setValue(bytesUploaded);
 }

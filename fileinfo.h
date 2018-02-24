@@ -21,15 +21,15 @@ public:
     bool isFile();
     void setFile(bool file);
 
-    qint16 getSize();
-    void setSize(qint16 size);
+    long getSize();
+    void setSize(long size);
 
 private:
     QString name;
     QDateTime lastModified;
     bool dir;
     bool file;
-    qint16 size;
+    long size;
 };
 
 #endif // FILEINFO_H

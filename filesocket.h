@@ -18,6 +18,7 @@ private:
     bool receivingList = false;
     QString fileName;
     QString command;
+    bool fileNameSet = false;
 
 public slots:
     void readyRead();
@@ -26,6 +27,7 @@ public slots:
 
 signals:
     void listReceived(QString list);
+    void bytesReceived(qint64);
 };
 
 #endif // FILESOCKET_H

@@ -39,12 +39,18 @@ private slots:
     void populateList(QVector<FileInfo>);
     void menu(const QPoint &click);
 
+    void on_remoteFiles_itemClicked(QTreeWidgetItem *item, int column);
+    void populateDownloadBar(qint64 bytes);
+    void populateUploadBar(qint64 bytes);
+
 private:
     Ui::MainWindow *ui;
     Ftp *ftp;
     bool disconnect;
     QFileSystemModel *fileModel;
     void getRemoteFiles(QString path = "/");
+    int bytesDownloaded = 0;
+    int bytesUploaded = 0;
 };
 
 #endif // MAINWINDOW_H

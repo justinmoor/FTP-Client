@@ -23,9 +23,7 @@ void Ftp::connectToHost(QString host, quint16 port, QString username, QString pa
     connect(socket, SIGNAL(disconnected()),socket,SLOT( deleteLater()));
     connect(socket, SIGNAL(readyRead()), this, SLOT(socketReadyRead()));
     connect(socket, SIGNAL(disconnected()), this, SLOT(socketConnectionClosed()));
-    connect(socket, SIGNAL(bytesWritten(qint64)), this, SLOT(socketBytesWritten(qint64)));
     connect(socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(error()));
-
     socket->connectToHost(host, port);
 }
 
@@ -33,12 +31,8 @@ void Ftp::error(){
     emit message("Can't connect to host!");
 }
 
-void Ftp::socketBytesWritten(qint64 bytes){
-
-}
 
 void Ftp::socketReadyRead(){
-    qDebug() << "Ready read";
     QString response = receiveResponse();
     if(response.startsWith("230")){
         connectFileSocket(host, response.split(" ").at(3).toInt());
@@ -106,7 +100,6 @@ void Ftp::parseList(QString list){
         FileInfo file;
         parseDir(line.toLocal8Bit(), &file);
         files.push_back(file);
-
     }
     emit listDone(files);
 }
@@ -120,8 +113,15 @@ void Ftp::mkdir(QString &dirname){
     sendCommand("MKD " + dirname.toLocal8Bit());
 }
 
+void Ftp::get(QString &fileName, QString &savePath){
+    fileSocket->receiveFile(savePath);
+    fileName = '"' + fileName + '"';
+    sendCommand("GET " + fileName.toLocal8Bit());
+}
+
 void Ftp::sendCommand(QByteArray command){
     emit currentCommand(command);
+    qDebug() << command;
     socket->flush();
     socket->write(command+"\r\n");
 }
@@ -137,9 +137,20 @@ void Ftp::put(QString &filePath, QString &fileName){
     fileSocket->sendFile(filePath);
 }
 
+//TODO MEM LEAK
 void Ftp::connectFileSocket(QString address, quint16 port){
     fileSocket = new FileSocket();
     fileSocket->connectFileSocket(address, port);
     connect(fileSocket, SIGNAL(listReceived(QString)), this, SLOT(parseList(QString)));
+    connect(fileSocket, SIGNAL(bytesWritten(qint64)), this, SLOT(socketBytesWritten(qint64))); // Wegschrijven
+    connect(fileSocket, SIGNAL(bytesReceived(qint64)), this, SLOT(socketBytesReceived(qint64)));
     connect(this, SIGNAL(currentCommand(QString)), fileSocket, SLOT(currentCommand(QString)));
+}
+
+void Ftp::socketBytesWritten(qint64 bytes){
+    emit toUploadBar(bytes);
+}
+
+void Ftp::socketBytesReceived(qint64 bytes){
+    emit toDownloadBar(bytes);
 }

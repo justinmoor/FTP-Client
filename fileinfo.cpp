@@ -37,11 +37,11 @@ void FileInfo::setFile(bool file){
     this->file = file;
 }
 
-qint16 FileInfo::getSize(){
+long FileInfo::getSize(){
     return this->size;
 }
 
-void FileInfo::setSize(qint16 size){
+void FileInfo::setSize(long size){
     this->size = size;
 }
 
