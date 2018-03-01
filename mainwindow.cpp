@@ -49,8 +49,8 @@ void MainWindow::on_connectButton_clicked()
         QString address = ui->address->text();
         quint16 port = ui->port->text().toInt();
 
-        QString username = ui->username->text();
-        QString password = ui->password->text();
+        QString username = (ui->username->text().isEmpty()) ? "anonymous" : ui->username->text();
+        QString password = (ui->password->text().isNull()) ? "nopass" : ui->password->text();
 
         ftp->connectToHost(address, port, username, password);
     } else {
@@ -79,6 +79,7 @@ void MainWindow::disconnected(){
     ui->remoteFiles->clear();
     ui->remoteFiles->setEnabled(false);
     ui->downloadButton->setEnabled(false);
+    ui->uploadButton->setEnabled(false);
     ui->downloadProgress->setValue(0);
     ui->uploadProgress->setValue(0);
     ui->logTextEdit->appendPlainText("You have been disconnected!");

@@ -25,7 +25,6 @@ void FileSocket::sendFile(QString fileName){
     buffer = file.readAll();
 
     write(buffer);
-    qDebug() << bytesToWrite();
 
     file.close();
 }
